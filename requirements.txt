@@ -1,0 +1,18 @@
+# Deep Research Agent Dependencies
+# Install with: pip install -r requirements.txt
+
+# Web scraping and HTTP
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+
+# Web search (DuckDuckGo - no API key needed)
+duckduckgo-search>=4.0.0
+
+# Financial data (Yahoo Finance - free)
+yfinance>=0.2.0
+
+# Optional: for enhanced news fetching
+# newsapi-python>=0.2.7  # Requires NEWSAPI_KEY
+
+# Utilities
+python-dotenv>=1.0.0

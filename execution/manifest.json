@@ -1,0 +1,200 @@
+{
+  "$schema": "./manifest.schema.json",
+  "_description": "Registry of all execution scripts. Update this when adding new scripts.",
+  "_usage": "Agent reads this to discover available tools without exploring the directory.",
+  "scripts": {
+    "search_web": {
+      "file": "search_web.py",
+      "description": "Performs web searches using DuckDuckGo with retry and HTML fallback.",
+      "inputs": {
+        "query": "string - Search query",
+        "num_results": "number - Max results (default: 20)",
+        "news": "boolean - Search news instead of web (default: false)",
+        "retries": "number - Max retry attempts (default: 3)"
+      },
+      "outputs": {
+        "query": "string",
+        "num_results": "number",
+        "results": "array of {title, url, snippet}",
+        "search_method": "string - 'ddgs' or 'fallback'"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Annealed 2026-01-28: Added retry with exponential backoff, HTML fallback if DDGS fails"
+    },
+    "fetch_webpage": {
+      "file": "fetch_webpage.py",
+      "description": "Fetches a webpage and extracts clean text content, metadata, and links.",
+      "inputs": {
+        "url": "string - URL to fetch",
+        "timeout": "number - Request timeout in seconds (default: 30)"
+      },
+      "outputs": {
+        "success": "boolean",
+        "url": "string",
+        "title": "string",
+        "content": "string - Extracted text",
+        "links": "array of {url, text}",
+        "metadata": "object"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "2-second delay recommended between requests to avoid blocks"
+    },
+    "fetch_news": {
+      "file": "fetch_news.py",
+      "description": "Fetches recent news articles with retry and Google News RSS fallback.",
+      "inputs": {
+        "query": "string - Search query",
+        "days": "number - Days to look back (default: 30)",
+        "max_results": "number - Max results per source (default: 20)",
+        "retries": "number - Max retry attempts (default: 3)"
+      },
+      "outputs": {
+        "query": "string",
+        "articles": "array of {title, url, snippet, date, source, provider}",
+        "sources_used": "array of strings (duckduckgo, google_rss, newsapi)",
+        "errors": "array or null"
+      },
+      "requires_env": ["NEWSAPI_KEY (optional)"],
+      "cost": "free (DuckDuckGo/Google RSS) or rate-limited (NewsAPI: 100/day)",
+      "idempotent": true,
+      "notes": "Annealed 2026-01-28: Added Google News RSS fallback, retry with exponential backoff"
+    },
+    "fetch_financials": {
+      "file": "fetch_financials.py",
+      "description": "Fetches financial data for public companies using Yahoo Finance.",
+      "inputs": {
+        "ticker": "string - Stock ticker symbol (e.g., AAPL, GOOGL)"
+      },
+      "outputs": {
+        "success": "boolean",
+        "ticker": "string",
+        "company": "object - name, sector, industry, employees, website",
+        "stock": "object - current_price, 52_week_high/low, volume",
+        "financials": "object - market_cap, revenue, profit_margin, growth",
+        "valuation": "object - pe_ratio, price_to_book",
+        "recommendations": "object - target_price, recommendation"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Only works for publicly traded companies with valid ticker symbols"
+    },
+    "fetch_social": {
+      "file": "fetch_social.py",
+      "description": "Discovers social media presence for a target (company or person).",
+      "inputs": {
+        "target": "string - Company or person name",
+        "platforms": "array - Platforms to focus on (optional)"
+      },
+      "outputs": {
+        "target": "string",
+        "profiles": "object - platform: {url, handle, snippet}",
+        "presence_score": "number - 0-100",
+        "primary_platforms": "array of strings"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Limited to publicly discoverable profiles. Cannot access private data."
+    },
+    "analyze_research": {
+      "file": "analyze_research.py",
+      "description": "Compiles and analyzes all collected research data in a directory.",
+      "inputs": {
+        "research_dir": "string - Path to research directory"
+      },
+      "outputs": {
+        "success": "boolean",
+        "key_facts": "object",
+        "key_people": "array",
+        "sentiment": "object - sentiment, score",
+        "timeline": "array of events",
+        "swot": "object - strengths, weaknesses, opportunities, threats",
+        "data_sources": "object - counts of data collected"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true
+    },
+    "generate_dossier": {
+      "file": "generate_dossier.py",
+      "description": "Generates a comprehensive research dossier from analyzed data.",
+      "inputs": {
+        "research_dir": "string - Path to research directory",
+        "format": "string - 'markdown' or 'json' (default: markdown)"
+      },
+      "outputs": {
+        "success": "boolean",
+        "target": "string",
+        "format": "string",
+        "output_file": "string - Path to generated dossier",
+        "content": "string - Dossier content (if markdown)"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true
+    },
+    "generate_html_report": {
+      "file": "generate_html_report.py",
+      "description": "Generates a visually styled HTML report that can be printed to PDF.",
+      "inputs": {
+        "research_dir": "string - Path to research directory",
+        "output": "string - Output HTML file path (optional)",
+        "title": "string - Custom report title (optional)"
+      },
+      "outputs": {
+        "file": "REPORT.html in research directory"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Open the HTML in a browser and use Print > Save as PDF. Styled to match professional report templates."
+    },
+    "fetch_wikipedia": {
+      "file": "fetch_wikipedia.py",
+      "description": "Fetches Wikipedia data including summaries, infobox data, and related pages.",
+      "inputs": {
+        "query": "string - Search query (company or person name)",
+        "entity_type": "string - 'company', 'person', or 'auto' (default: auto)"
+      },
+      "outputs": {
+        "success": "boolean",
+        "query": "string",
+        "title": "string - Wikipedia page title",
+        "summary": "string - Page summary/extract",
+        "url": "string - Wikipedia URL",
+        "infobox": "object - Structured data from infobox",
+        "categories": "array - Page categories",
+        "related_pages": "array - Links to related Wikipedia pages"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Uses Wikipedia API. Good for background info, founding dates, key people. No rate limits for reasonable use."
+    },
+    "fetch_sec_edgar": {
+      "file": "fetch_sec_edgar.py",
+      "description": "Fetches SEC EDGAR filings and financial data for US public companies.",
+      "inputs": {
+        "company": "string - Company name to search (optional)",
+        "cik": "string - SEC CIK number (optional)",
+        "ticker": "string - Stock ticker symbol (optional)"
+      },
+      "outputs": {
+        "success": "boolean",
+        "cik": "string - SEC CIK number",
+        "company_info": "object - name, ticker, SIC code, addresses, exchanges",
+        "financial_facts": "object - XBRL data (revenue, net income, assets, etc.)",
+        "recent_filings": "array - Recent 10-K, 10-Q, 8-K filings"
+      },
+      "requires_env": [],
+      "cost": "free",
+      "idempotent": true,
+      "notes": "Only works for US public companies that file with SEC. Provides official financial data from XBRL filings."
+    }
+  }
+}
